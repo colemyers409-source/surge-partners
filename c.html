@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your next step — Surge Partners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/config.js"></script>
+<style>
+body{background:#f4f4f2;color:#141414}
+.top{background:#fff;border-bottom:1px solid #e6e6e6;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+.hero{padding:34px 20px 120px;color:#fff}
+.wrap{max-width:560px;margin:0 auto}
+.hero h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-top:26px}
+.hero .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.85}
+.panel{background:#fff;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:22px;margin:-96px auto 18px;color:#141414}
+.panel h2{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#8a6d1c;display:flex;align-items:center;gap:6px}
+.box{background:#f5f5f3;border-radius:14px;padding:16px;margin-top:14px}
+.hostrow{display:flex;gap:12px;background:#eceae4;border-radius:12px;padding:10px 14px;margin-top:12px;font-size:12.5px}
+.hostrow b{display:block;font-size:13px}
+.cta{display:block;width:100%;background:#111;color:#fff;border:none;border-radius:12px;padding:15px;font-weight:700;font-size:15px;margin-top:14px}
+.cta.gold{background:linear-gradient(135deg,#d4af37,#b8932a);color:#111}
+.cta:disabled{opacity:.5}
+.days{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.dayb{flex:none;border:1.5px solid #e2e2de;border-radius:12px;padding:10px 14px;text-align:center;background:#fff;min-width:74px;cursor:pointer}
+.dayb.on{border-color:#111;background:#111;color:#fff}
+.dayb small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;opacity:.7}
+.dayb b{font-size:20px}
+.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px}
+.tb{border:1.5px solid #e2e2de;background:#fff;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}
+.tb.on{border-color:#d4af37;background:#fbf4dd}
+.step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #eee}
+.step:last-child{border-bottom:none}
+.step .n{width:26px;height:26px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:none}
+.step.done .n{background:#d4af37;color:#111}.step.now .n{background:#111;color:#fff}
+.meeting{background:#fbf4dd;border:1px solid #ecd58a;border-radius:12px;padding:14px;margin-top:10px}
+.foot{text-align:center;color:#888;font-size:12px;padding:30px 20px}
+.err{color:#c0392b;font-size:13px;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="top"><div class="logo" style="color:#111"><span class="mark">S</span><span id="brandTop">Surge Partners</span></div><a href="#" id="dashLink" style="font-weight:700;color:#111">Dashboard</a></div>
+<div id="hero" class="hero gradient-hero"><div class="wrap"><div class="logo"><span class="mark" style="width:30px;height:30px;font-size:16px">S</span><span id="brandHero">SURGE PARTNERS</span></div><div id="heroText"><div class="eyebrow" style="margin-top:26px">Loading</div><h1>&nbsp;</h1></div></div></div>
+<div class="wrap" style="padding:0 16px"><div id="panel" class="panel"><div style="text-align:center;padding:30px"><span class="spin"></span></div></div><div id="extra"></div></div>
+<div class="foot">Reply STOP to any text to opt out. Questions? Just reply to our text.</div>
+<script>
+const CFG=window.SR_CONFIG; const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const token=(location.pathname.match(/\/c\/([^\/]+)/)||[])[1]||new URLSearchParams(location.search).get('t');
+const DEMO=!token||token.startsWith('demo');
+const sb=DEMO?null:supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY);
+let data, view='dashboard', pickedDay=null, pickedSlot=null, tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+const fmtT=d=>new Date(d).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz});
+const fmtD=d=>new Date(d).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:tz});
+const dayKey=d=>new Date(d).toLocaleDateString('en-CA',{timeZone:tz});
+
+function demoData(){ const now=Date.now(),d=864e5; const slots=[]; for(let k=1;k<=7;k++){ const dt=new Date(now+k*d); if(dt.getDay()%6===0) continue; dt.setHours(19,0,0,0); slots.push({id:'s'+k,type:'Interview',meeting_type_id:'t1',starts_at:dt.toISOString(),duration_min:30,host:'Cole Myers',open:50-k*3}); }
+  return {candidate:{first_name:'Darion',status:'New',timezone:'America/Chicago',dnc:false},position:{title:'Entry Level Sales Representative',position_type:'Life Insurance Sales Rep'},brand:{company:'Surge Partners',gradient_start:'#0b0b0b',gradient_end:'#c9a227'},meeting_types:[{id:'t1',name:'Interview',duration_min:30,location:'Virtual',booking_window_days:7,sort:1},{id:'t2',name:'NHO',duration_min:30,location:'Virtual',booking_window_days:7,sort:2}],meetings:[],slots}; }
+async function load(){ if(DEMO){ data=data||demoData(); } else { const {data:d,error}=await sb.rpc('rp_portal',{p_token:token}); if(error||d?.error){ $('#panel').innerHTML=`<h2>Link not found</h2><p class="muted">This link isn't valid anymore. Reply to our text and we'll send a fresh one.</p>`; return; } data=d; } render(); }
+
+function nextStep(){ const types=data.meeting_types; const sched=data.meetings.filter(m=>m.status==='scheduled'&&new Date(m.starts_at)>Date.now()-30*60e3); if(sched.length) return {kind:'upcoming',meeting:sched[0]};
+  const doneTypes=new Set(data.meetings.filter(m=>['qualified','completed'].includes(m.status)).map(m=>m.type)); const t=types.find(t=>!doneTypes.has(t.name)); if(!t) return {kind:'done'};
+  if(t.name!=='Interview' && !doneTypes.has('Interview')) return {kind:'book',type:types[0]}; return {kind:'book',type:t}; }
+
+function render(){
+  const b=data.brand||{}; const first=data.candidate.first_name; document.title=`Your next step — ${b.company||'Surge Partners'}`;
+  $('#brandTop').textContent=b.company||'Surge Partners'; $('#brandHero').textContent=(b.company||'Surge Partners').toUpperCase();
+  $('#hero').style.setProperty('--g1',b.gradient_start||'#0b0b0b'); $('#hero').style.setProperty('--g2',b.gradient_end||'#c9a227');
+  $('#dashLink').onclick=e=>{e.preventDefault(); view='dashboard'; render();};
+  const st=nextStep();
+  if(view==='dashboard'){
+    $('#heroText').innerHTML=`<h1 style="margin-top:26px">Welcome back, ${esc(first)}</h1><div style="opacity:.9">Here's what's next for you.</div>`;
+    let card='';
+    if(data.candidate.dnc){ card=`<h2>You've opted out</h2><p class="muted">Text START to our number if you'd like to pick things back up.</p>`; }
+    else if(st.kind==='upcoming'){ const m=st.meeting; card=`<div class="tag">● Up next</div><h2 style="margin-top:6px">Your ${esc(m.type)} is booked</h2><div class="muted small">${esc(data.position.position_type)}</div><div class="meeting"><b>${fmtD(m.starts_at)}</b><div>${fmtT(m.starts_at)} · ${esc(m.host||'Hiring manager')} · Video call</div></div>${m.join_url?`<a class="cta gold" href="${esc(m.join_url)}" target="_blank" style="text-align:center;text-decoration:none">Join video call →</a>`:''}<button class="cta" style="background:#eee;color:#111" id="resched">Reschedule</button><button class="cta" style="background:none;color:#888;margin-top:4px" id="cancel">Cancel meeting</button><div class="err" id="err"></div>`; }
+    else if(st.kind==='book'){ const t=st.type; card=`<div class="tag">● Up next <span style="margin-left:auto;background:#fbf4dd;padding:3px 9px;border-radius:999px">Schedule</span></div><h2 style="margin-top:6px">Schedule your ${esc(t.name==='NHO'?'New Hire Orientation':t.name)}</h2><div class="muted small">${esc(data.position.position_type)}</div><div class="box"><div class="row"><div style="width:44px;height:44px;border-radius:10px;background:#fbf4dd;display:flex;align-items:center;justify-content:center">📅</div><div><b>Pick your time</b><div class="small muted">${t.duration_min}-min ${esc(t.name)}${t.booking_window_days?` · book within ${t.booking_window_days} days`:''}</div></div></div><div class="hostrow"><div><b>${esc(data.slots[0]?.host||'Cole Myers')}</b><span class="muted">Hiring Manager</span></div><div style="margin-left:auto;text-align:right"><b>Video call</b><span class="muted">Online</span></div></div></div><button class="cta" id="choose">Choose a time →</button>`; }
+    else { card=`<h2>You're all set, ${esc(first)}!</h2><p class="muted">You've completed every step. We'll reach out with what comes next.</p>`; }
+    $('#panel').innerHTML=card;
+    const types=data.meeting_types; const doneTypes=new Set(data.meetings.filter(m=>['qualified','completed'].includes(m.status)).map(m=>m.type)); const schedTypes=new Set(data.meetings.filter(m=>m.status==='scheduled').map(m=>m.type));
+    $('#extra').innerHTML=`<div class="panel" style="margin-top:0"><div class="tag">Your roadmap</div>${types.map((t,i)=>{const done=doneTypes.has(t.name), now=!done&&(st.kind==='book'&&st.type.id===t.id||schedTypes.has(t.name));return `<div class="step ${done?'done':now?'now':''}"><div class="n">${done?'✓':i+1}</div><div><b>${esc(t.name==='NHO'?'New Hire Orientation (NHO)':t.name)}</b><div class="small muted">${done?'Completed':schedTypes.has(t.name)?'Scheduled':now?'Up next':'Upcoming'}</div></div></div>`;}).join('')}</div>
+    <div class="panel" style="margin-top:0"><div class="tag">Upcoming meetings</div>${data.meetings.filter(m=>m.status==='scheduled').map(m=>`<div class="meeting"><b>${esc(m.type)}</b> · ${fmtD(m.starts_at)} at ${fmtT(m.starts_at)}</div>`).join('')||'<p class="small muted" style="margin:8px 0 0">Once you book, your meeting shows up here.</p>'}</div>`;
+    $('#choose')&&($('#choose').onclick=()=>{view='book'; pickedDay=null; pickedSlot=null; render();});
+    $('#resched')&&($('#resched').onclick=()=>{view='book'; pickedDay=null; pickedSlot=null; render();});
+    $('#cancel')&&($('#cancel').onclick=async()=>{ if(!confirm('Cancel this meeting?')) return; const m=st.meeting; if(DEMO){ m.status='canceled'; render(); return; } const {data:r}=await sb.rpc('rp_cancel',{p_token:token,p_meeting:m.id}); if(r?.error){ $('#err').textContent=r.error==='too_late'?'It\'s too close to the meeting to cancel online — just reply to our text.':'Could not cancel.'; return; } await load(); });
+  } else {
+    const t=st.kind==='book'?st.type:data.meeting_types.find(x=>x.name===st.meeting?.type)||data.meeting_types[0];
+    $('#heroText').innerHTML=`<div class="eyebrow" style="margin-top:26px">You're invited</div><h1 style="margin-top:4px">${esc(t.name==='NHO'?'New Hire Orientation':t.name)}</h1><div style="opacity:.9">${esc(data.position.position_type)}</div>`;
+    const slots=data.slots.filter(s=>s.meeting_type_id===t.id&&s.open>0); const days=[...new Set(slots.map(s=>dayKey(s.starts_at)))];
+    if(!pickedDay) pickedDay=days[0];
+    const daySlots=slots.filter(s=>dayKey(s.starts_at)===pickedDay);
+    $('#panel').innerHTML=`<div class="tag">● Up next <span style="margin-left:auto;background:#fbf4dd;padding:3px 9px;border-radius:999px">Schedule</span></div><h2 style="margin-top:6px">Schedule your ${esc(t.name)}</h2><div class="muted small">${esc(data.position.position_type)}</div>
+      <div class="hostrow"><div><b>${esc(slots[0]?.host||'Cole Myers')}</b><span class="muted">Hiring Manager</span></div><div style="margin-left:auto;text-align:right"><b>Video call</b><span class="muted">Online</span></div></div>
+      <div class="small muted" style="margin:14px 0 8px">🌐 Times shown in ${esc(tz.replace('_',' '))}</div>
+      ${days.length?`<b>When works for you?</b><div class="days" style="margin-top:8px">${days.map(d=>{const n=slots.filter(s=>dayKey(s.starts_at)===d).length; const dt=new Date(d+'T12:00:00'); return `<div class="dayb ${d===pickedDay?'on':''}" data-d="${d}"><small>${dt.toLocaleDateString('en-US',{weekday:'short'})}</small><b>${dt.getDate()}</b><small>${n} open</small></div>`;}).join('')}</div>
+      <div class="small muted" style="margin-top:14px;letter-spacing:.08em;text-transform:uppercase;font-weight:800">${fmtD(daySlots[0]?.starts_at||pickedDay+'T12:00:00')}</div><div class="times">${daySlots.map(s=>`<div class="tb ${pickedSlot===s.id?'on':''}" data-s="${s.id}">${fmtT(s.starts_at)}<div class="tiny muted" style="font-weight:500">${s.open} open</div></div>`).join('')}</div>
+      <button class="cta gold" id="confirm" ${pickedSlot?'':'disabled'}>Confirm ${pickedSlot?fmtT(slots.find(s=>s.id===pickedSlot).starts_at):'time'}</button>`:`<p class="muted" style="margin-top:14px">No open times right now — new times are added daily, so check back soon or reply to our text.</p>`}
+      <button class="cta" style="background:none;color:#666;margin-top:6px" id="back">← Back</button><div class="err" id="err"></div>`;
+    $('#extra').innerHTML='';
+    document.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{pickedDay=x.dataset.d; pickedSlot=null; render();});
+    document.querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{pickedSlot=x.dataset.s; render();});
+    $('#back').onclick=()=>{view='dashboard'; render();};
+    $('#confirm')&&($('#confirm').onclick=async()=>{ const s=slots.find(x=>x.id===pickedSlot); $('#confirm').disabled=true; $('#confirm').textContent='Booking…';
+      if(DEMO){ data.meetings.forEach(m=>{ if(m.type===t.name&&m.status==='scheduled') m.status='canceled'; }); data.meetings.push({id:'m'+Date.now(),type:t.name,starts_at:s.starts_at,status:'scheduled',host:s.host,join_url:'https://zoom.us/j/000'}); s.open--; view='dashboard'; render(); return; }
+      const {data:r,error}=await sb.rpc('rp_book',{p_token:token,p_slot:s.id}); if(error||r?.error){ $('#err').textContent=r?.error==='slot_full'?'That time just filled up — pick another.':'Could not book. Try again.'; $('#confirm').disabled=false; $('#confirm').textContent='Confirm'; return; } view='dashboard'; await load(); });
+  }
+}
+load();
+</script>
+</body>
+</html>
